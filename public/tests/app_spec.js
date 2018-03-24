@@ -18,7 +18,17 @@ describe('Learn JS', () => {
   describe('problem view', () => {
     it('has a title that includes the problem number', () => {
       const view = learnjs.problemView('1');
-      expect(view.text()).toEqual('problem #1 Comming soon!')
+      expect(view.find('.title').text()).toEqual('problem #1');
+    });
+
+    it('shows the description', () => {
+      const view = learnjs.problemView('1');
+      expect(view.find('[data-name="description"]').text()).toEqual(learnjs.problems[0].description);
+    });
+
+    it('show the problem code', () => {
+      const view = learnjs.problemView('1');
+      expect(view.find('[data-name="code"]').text()).toEqual(learnjs.problems[0].code);      
     });
   });
 
