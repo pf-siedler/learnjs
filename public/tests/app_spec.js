@@ -15,23 +15,6 @@ describe('Learn JS', () => {
     expect(learnjs.problemView).toHaveBeenCalledWith('42');
   });
 
-  describe('problem view', () => {
-    it('has a title that includes the problem number', () => {
-      const view = learnjs.problemView('1');
-      expect(view.find('.title').text()).toEqual('problem #1');
-    });
-
-    it('shows the description', () => {
-      const view = learnjs.problemView('1');
-      expect(view.find('[data-name="description"]').text()).toEqual(learnjs.problems[0].description);
-    });
-
-    it('show the problem code', () => {
-      const view = learnjs.problemView('1');
-      expect(view.find('[data-name="code"]').text()).toEqual(learnjs.problems[0].code);      
-    });
-  });
-
   it('invokes the router when loaded', () => {
     spyOn(learnjs, 'showView');
     learnjs.appOnReady();
@@ -43,5 +26,73 @@ describe('Learn JS', () => {
     spyOn(learnjs, 'showView');
     $(window).trigger('hashchange');
     expect(learnjs.showView).toHaveBeenCalledWith(window.location.hash);
+  });
+
+  it('can flash an element while setting the text', () => {
+    let elem = $('<p>');
+    spyOn(elem, 'fadeOut').and.callThrough();
+    spyOn(elem, 'fadeIn');
+    learnjs.flashElement(elem, "Hello world");
+    expect(elem.text()).toEqual("Hello world");
+    expect(elem.fadeOut).toHaveBeenCalled();
+    expect(elem.fadeIn).toHaveBeenCalled();
+  });
+
+  it('can redirect to the main view after the last problem is answered', () => {
+    const flash = learnjs.buildCorrectFlash(learnjs.problems.length);
+    expect(flash.find('a').attr('href')).toEqual('');
+    expect(flash.find('a').text()).toEqual('You are Finished!');
+  });
+
+  describe('problem view', () => {
+    let view;
+    beforeEach(function() {
+      view = learnjs.problemView('1');
+    });
+
+    it('has a title that includes the problem number', () => {
+      expect(view.find('.title').text()).toEqual('problem #1');
+    });
+
+    it('shows the description', () => {
+      expect(view.find('[data-name="description"]').text()).toEqual(learnjs.problems[0].description);
+    });
+
+    it('show the problem code', () => {
+      expect(view.find('[data-name="code"]').text()).toEqual(learnjs.problems[0].code);      
+    });
+
+    describe('answer section', () => {
+      let resultFlash;
+      beforeEach(() => {
+        spyOn(learnjs, 'flashElement');
+        resultFlash = view.find('.result');
+      });
+
+      describe('when the answer is correct', () => {
+        beforeEach(() => {
+          view.find('.answer').val('true');
+          view.find('.check-btn').click();  
+        });
+
+        it('flashes the result', () => {
+          const flashArgs = learnjs.flashElement.calls.argsFor(0);
+          expect(flashArgs[0]).toEqual(resultFlash);
+          expect(flashArgs[1].find('span').text()).toEqual('Correct!');
+        });
+  
+        it('shows a link to next problem', () => {
+          const link = learnjs.flashElement.calls.argsFor(0)[1].find('a');
+          expect(link.text()).toEqual('Next Problem');
+          expect(link.attr('href')).toEqual('#problem-2')
+        });  
+      });
+
+      it('rejects an incorrect answer', () => {
+        view.find('.answer').val('false');
+        view.find('.check-btn').click();
+        expect(learnjs.flashElement).toHaveBeenCalledWith(resultFlash, 'Incorrect!');
+      });
+    });
   });
 });
